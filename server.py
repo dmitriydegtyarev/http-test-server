@@ -1,6 +1,6 @@
-
-from flask import Flask, request, send_file, jsonify
-from io import BytesIO
+from flask import Flask, request, jsonify, send_file
+from reportlab.pdfgen import canvas
+import io
 
 app = Flask(__name__)
 
@@ -8,23 +8,22 @@ app = Flask(__name__)
 def handle_request():
     data = request.get_json()
     if not data or "type" not in data:
-        return jsonify({"error": "Missing 'type' field"}), 400
+        return jsonify({"error": "Missing 'type' in request"}), 400
 
     if data["type"] == 1:
-        # Створюємо простий PDF-файл у памʼяті
-        from reportlab.pdfgen import canvas
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer)
-        p.drawString(100, 750, "Це PDF-файл, сформований для type = 1")
-        p.save()
-        buffer.seek(0)
-        return send_file(buffer, as_attachment=True, download_name="generated.pdf", mimetype='application/pdf')
+        # Створення PDF у пам'яті
+        pdf_buffer = io.BytesIO()
+        c = canvas.Canvas(pdf_buffer)
+        c.drawString(100, 750, "Це PDF-файл, згенерований сервером.")
+        c.save()
+        pdf_buffer.seek(0)
+        return send_file(pdf_buffer, as_attachment=True, download_name="file.pdf", mimetype="application/pdf")
 
     elif data["type"] == 2:
-        return jsonify({"type": 2})
+        return jsonify({"type": 2, "message": "JSON response for type 2"})
 
     else:
-        return jsonify({"error": "Unsupported type"}), 400
+        return jsonify({"error": "Invalid 'type' value"}), 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
